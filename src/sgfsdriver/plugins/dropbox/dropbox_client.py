@@ -316,26 +316,6 @@ class dropbox_client(object):
         # invalidate stat cache
         self.clear_stat_cache(path)
 
-    def truncate(self, path, size):
-        logger.info("truncate : %s" % path)
-        try:
-            with tempfile.TemporaryFile() as f:
-                if self.exists(path):
-                    logger.info("truncate: opening a file - %s" % path)
-                    download_file(self.dbx, path, f)
-                else:
-                    logger.info("truncate: creating a file - %s" % path)
-                f.truncate(size) # what should be done if size overflow
-                f.flush()
-                upload_file(self.dbx, f, path)
-        except Exception, e:
-            logger.error("truncate: " + traceback.format_exc())
-            traceback.print_exc()
-            raise e
-
-        # invalidate stat cache
-        self.clear_stat_cache(path)
-
     def unlink(self, path):
         logger.info("unlink : %s" % path)
         try:
@@ -345,6 +325,27 @@ class dropbox_client(object):
 
         except Exception, e:
             logger.error("unlink: " + traceback.format_exc())
+            traceback.print_exc()
+            raise e
+
+        # invalidate stat cache
+        self.clear_stat_cache(path)
+
+    def truncate(self, path, size):
+        logger.info("truncate : %s" % path)
+        try:
+            with tempfile.TemporaryFile() as f:
+                if self.exists(path):
+                    logger.info("truncate: opening a file - %s" % path)
+                    download_file(self.dbx, path, f)
+                    self.dbx.files_delete(path)
+                else:
+                    logger.info("truncate: creating a file - %s" % path)
+                f.truncate(size) # what should be done if size overflow
+                f.flush()
+                upload_file(self.dbx, f, path)
+        except Exception, e:
+            logger.error("truncate: " + traceback.format_exc())
             traceback.print_exc()
             raise e
 
